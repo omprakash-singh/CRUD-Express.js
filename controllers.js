@@ -1,4 +1,5 @@
 const User = require('./model');
+const APIFeatures = require('./utility/apiFeature');
 
 // CREATE
 exports.createNewUser = (req, res) => {
@@ -12,6 +13,7 @@ exports.createNewUser = (req, res) => {
                     });
                } else {
                     res.status(201).json({
+                         status: 'success',
                          message: "User Created",
                          User: todo
                     })
@@ -31,7 +33,10 @@ exports.getUser = async (req, res) => {
           const user = await User.find();
           res.status(200).json({
                message: 'Success',
-               user: user
+               result: user.length,
+               data: {
+                    user
+               }
           })
      } catch (error) {
           res.status(500).json({
@@ -62,7 +67,10 @@ exports.getUserByEmail = async (req, res) => {
                     } else {
                          res.status(200).json({
                               status: "success",
-                              message: todo
+                              result: todo.length,
+                              data: {
+                                   todo
+                              }
                          })
                     }
                }
@@ -120,7 +128,7 @@ exports.putUser = async (req, res) => {
           //      returnDocument: true
           // });
 
-          const user = await User.findOneAndUpdate({ email: req.query.email }, req.body);
+          const user = await User.findOneAndReplace({ email: req.query.email }, req.body);
           if (!user) {
                return res.status(400).json({
                     status: 'Fail',
@@ -164,4 +172,26 @@ exports.deleteUser = async (req, res) => {
                Error: error.message
           })
      }
-}
+};
+
+exports.filter = async (req, res) => {
+     try {
+          const features = new APIFeatures(User.find(), req.query).filter().sort().limitField().paginate();
+
+          const user = await features.query;
+
+          res.status(200).json({
+               status: 'success',
+               result: user.length,
+               data: {
+                    user
+               }
+          })
+
+     } catch (error) {
+          res.status(404).json({
+               status: 'fail',
+               message: error.message
+          });
+     }
+};
